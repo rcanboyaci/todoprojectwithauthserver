@@ -4,7 +4,6 @@ import Home from './Home';
 import Login from './Login';
 import Register from './Register';
 import { ToastContainer } from 'react-toastify';
-
 function App() {
   return (
     <div className="App">
