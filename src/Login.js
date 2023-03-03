@@ -26,7 +26,7 @@ const Login = () => {
             }).then((res) => {
                 return res.json();
             }).then((resp) => {
-                console.log(resp)
+                //console.log(resp)
                 if (resp.statusCode !== 200) {
                     toast.error('Login failed, invalid credentials');
                 } else {
