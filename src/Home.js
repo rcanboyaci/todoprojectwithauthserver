@@ -1,18 +1,25 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import Button from 'react-bootstrap/Button';
+import Modal from 'react-bootstrap/Modal';
 
 
 function Home() {
     const usenavigate = useNavigate();
+    const [show, setShow] = useState(false);
+    const [show1, setShow1] = useState(false);
+    const [show2, setShow2] = useState(false);
     const [todolist, todolistupdate] = useState([]);
     const [displayemail, displayemailupdate] = useState('');
-    const [listName, listNameupdate] = useState('');
+    const [ListName, setlistName] = useState('');
+    const [showlistName, showlistNameupdate] = useState('');
     const [id, idupdate] = useState(null);
-    //const [movieId, movieIdupdate] = useState(null);
-    const [showDetails, setShowDetails] = useState(false);
     const [title, titleupdate] = useState(null);
-
+    const [movies, setmovies] = useState([]);
+    const [movielistId, movielistIdUpdate] = useState(0);
+    const [movietodoList, setmovietodoList] = useState([]);
+    const [movietodoListwatched, setmovietodoListwatched] = useState(null);
 
     useEffect(() => {
         let email = sessionStorage.getItem('email');
@@ -40,7 +47,7 @@ function Home() {
     const IsValidate = () => {
         let isproceed = true;
         let errormessage = 'Please enter the value in ';
-        if (listName === null || listName === '') {
+        if (ListName === null || ListName === '') {
             isproceed = false;
             errormessage += ' Listname';
         }
@@ -54,6 +61,7 @@ function Home() {
         e.preventDefault();
         if (IsValidate()) {
             let jwttoken = sessionStorage.getItem('jwttoken');
+            let listName = ListName;
             let regobj = { listName };
             fetch("https://localhost:7089/api/ToDoList/SaveToDoList", {
                 method: "POST",
@@ -62,10 +70,10 @@ function Home() {
             }).then((res) => {
                 return res.json();
             }).then((resp) => {
-                listNameupdate(resp.data.listName);
-                console.log(resp);
+                setlistName(resp.data.listName);
+                handleClose2();
             });
-            window.location.reload();
+            //window.location.reload();
 
         }
     }
@@ -73,23 +81,20 @@ function Home() {
     function handleUpdateSubmit(e) {
         e.preventDefault();
         if (IsValidate()) {
+            let listName = ListName;
             let jwttoken = sessionStorage.getItem('jwttoken');
             let regobj = { id, listName };
             fetch("https://localhost:7089/api/ToDoList/EditToDoList", {
                 method: "PUT",
                 headers: { 'content-type': 'application/json', 'Authorization': 'bearer ' + jwttoken },
                 body: JSON.stringify(regobj)
-            }).then((res) => {
-                return res.json();
-            }).then((resp) => {
-                listNameupdate(resp.data.listName);
-                console.log(resp);
-            });
-            window.location.reload();
+            })
+            handleClose1();
         }
     }
 
     const handleClick = (id) => {
+        handleShow1(true);
         idupdate(id);
     };
 
@@ -111,10 +116,11 @@ function Home() {
         window.location.reload();
     };
 
-
-    function handleButtonClick(id) {
-        setShowDetails(showDetails);
+    function handleButtonClick(id, listName) {
+        const col8 = document.querySelector('.col-8');
+        col8.style.display = 'block';
         idupdate(id);
+        showlistNameupdate(listName);
         let jwttoken = sessionStorage.getItem('jwttoken');
         fetch(`https://localhost:7089/api/MovieToDoList/GetByListIdWithMovie/${id}`, {
             method: "GET",
@@ -124,36 +130,110 @@ function Home() {
         }).then((res) => {
             return res.json();
         }).then((resp) => {
+            if (resp.data === null) {
+                toast.info(`${resp.errors}`);
+            }
             titleupdate(resp.data);
+        })
+            .catch((err) => {
+                console.log(err.messsage);
+            });
+    }
+
+    useEffect(() => {
+        let jwttoken = sessionStorage.getItem('jwttoken');
+        fetch('https://localhost:7089/api/Movie/GetAllMovie', {
+            method: "GET",
+            headers: {
+                'Authorization': 'bearer ' + jwttoken
+            }
+        }).then((res) => {
+            return res.json();
+        }).then((resp) => {
+            setmovies(resp.data)
         }).catch((err) => {
             console.log(err.messsage)
         });
+    }, []);
+
+    function handleSelectChange(e) {
+        e.preventDefault();
+        movielistIdUpdate(e.target.value);
+    };
+
+    function handleMovieSelect() {
+        let jwttoken = sessionStorage.getItem('jwttoken');
+        let todolistId = id;
+        let movieId = movielistId;
+        console.log(movieId);
+        let regobj = { todolistId, movieId };
+        fetch("https://localhost:7089/api/MovieToDoList/SaveMovieToDoList", {
+            method: "POST",
+            headers: { 'content-type': 'application/json', 'Authorization': 'bearer ' + jwttoken },
+            body: JSON.stringify(regobj)
+        }).then((res) => {
+            return res.json();
+        }).then((resp) => {
+            if (resp.data === null) {
+                toast.info(`${resp.errors}`);
+            }
+            movielistIdUpdate(resp);
+            handleClose();
+        }).catch(error => {
+            console.error('Hata:', error);
+        })
+    };
+
+
+    function handledeleteMovie(mId) {
+        let jwttoken = sessionStorage.getItem('jwttoken');
+        fetch(`https://localhost:7089/api/MovieToDoList/RemoveMovieToDoList/${mId}`, {
+            method: "DELETE",
+            headers: { 'content-type': 'application/json', 'Authorization': 'bearer ' + jwttoken },
+        }).then((res) => {
+            return res.json();
+        }).then((resp) => {
+            setmovietodoList(resp);
+        }).catch((err) => {
+            console.log(err.messsage);
+        });
+        window.location.reload();
+    };
+
+    function handlewatched(mtlId) {
+        titleupdate(title.map((item) => {
+            if (item.id === mtlId) {
+                return {
+                    ...item,
+                    watched: !item.watched
+                };
+            } else {
+                return item;
+            }
+        }));
+        let jwttoken = sessionStorage.getItem('jwttoken');
+        let id = mtlId;
+        let watched = true;
+        let regobj = { id, watched };
+        fetch("https://localhost:7089/api/MovieToDoList/EditMovieToDoList", {
+            method: "PUT",
+            headers: { 'content-type': 'application/json', 'Authorization': 'bearer ' + jwttoken },
+            body: JSON.stringify(regobj)
+        }).then((res) => {
+            return res.json();
+        }).then((resp) => {
+            setmovietodoListwatched(resp);
+        }).catch((err) => {
+            console.log(err.messsage);
+        });
     }
 
-    function Detail(props) {
-        if (props.showDetails) {
-            return null;
-        }
-        return (
-            <div>
-                <div className='body'>
-                    <div className="row">
-                        <div className="col-12">
-                            <h2>List Detail</h2>
-                            {title && title.map(item => (
-                                <ul className="list-group" key={item.movieId} data={item}>
-                                    <li className="list-group-item"><strong>{item.title}</strong><button type='button' style={{ float: 'right' }} className='btn btn-outline-success btn-sm'>✓</button>
-                                        <button style={{ float: 'left', textDecoration: 'none', color: 'red' }} className="btn btn-link btn-sm">X</button>
-                                    </li>
-                                </ul>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        );
-    }
+    const handleClose = () => setShow(false);
+    const handleShow = () => setShow(true);
+    const handleClose1 = () => setShow1(false);
+    const handleShow1 = () => setShow1(true);
+    const handleClose2 = () => setShow2(false);
+    const handleShow2 = () => setShow2(true);
 
     return (
         <div>
@@ -165,57 +245,83 @@ function Home() {
             <div className='body'>
                 <div className="row">
                     <div className="col-4">
-                        <h2>My List</h2>
+                        <div><strong>My List</strong></div>
                         {todolist && todolist.map(item => (
                             <ul className="list-group" key={item.id} data={item}>
-                                <li className="list-group-item"><strong>{item.listName}</strong><button type='button' style={{ float: 'right' }} onClick={() => handleButtonClick(item.id)} className='btn btn-outline-dark btn-sm'>Detail</button>
-                                    <button style={{ float: 'right' }} onClick={() => handleClick(item.id)} className="btn btn-secondary btn-sm" data-toggle="modal" data-target="#exampleModal">Edit</button><button style={{ float: 'left', textDecoration: 'none', color: 'red' }} onClick={() => deletehandleClick(item.id)} className="btn btn-link btn-sm">X</button>
+                                <li className="list-group-item"><strong>{item.listName}</strong><button type='button' style={{ float: 'right' }} onClick={() => handleButtonClick(item.id, item.listName)} className='btn btn-outline-dark btn-sm'>Detail</button>
+                                    <Button style={{ float: 'right' }} onClick={() => handleClick(item.id)} variant="secondary btn-sm">Edit</Button><button style={{ float: 'left', textDecoration: 'none', color: 'red' }} onClick={() => deletehandleClick(item.id)} className="btn btn-link btn-sm">X</button>
                                 </li>
                             </ul>
                         ))}
-                        <div className="modal fade" id="exampleModal" tabIndex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-                            <div className="modal-dialog" role="document">
-                                <div className="modal-content">
-                                    <div className="modal-header">
-                                        <h5 className="modal-title" id="exampleModalLabel">Güncelleme işlemi.</h5>
-                                        <button type="button" className="close" data-dismiss="modal" aria-label="Close">
-                                            <span aria-hidden="true">&times;</span>
-                                        </button>
-                                    </div>
-                                    <div className="modal-body">
-                                        <input value={listName} onChange={e => listNameupdate(e.target.value)} className="form-control" ></input>
-                                    </div>
-                                    <div className="modal-footer">
-                                        <button type="button" className="btn btn-secondary" data-dismiss="modal">Close</button>
-                                        <button type="button" onClick={handleUpdateSubmit} className="btn btn-primary">Save</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <Modal show={show1} onHide={handleClose1}>
+                            <Modal.Header closeButton>
+                                <Modal.Title>Güncellemek istediğiniz listeyi giriniz</Modal.Title>
+                            </Modal.Header>
+                            <Modal.Body><input value={ListName} onChange={e => setlistName(e.target.value)} className="form-control" ></input></Modal.Body>
+                            <Modal.Footer>
+                                <Button variant="secondary" onClick={handleClose1}>
+                                    Close
+                                </Button>
+                                <Button variant="primary" onClick={handleUpdateSubmit}>
+                                    Save
+                                </Button>
+                            </Modal.Footer>
+                        </Modal>
                         <br />
-                        <button style={{ float: 'right' }} className="btn btn-success btn-sm" data-toggle="modal" data-target="#exampleModal1">Add List</button>
-                        <div className="modal fade" id="exampleModal1" tabIndex="-1" role="dialog" aria-labelledby="exampleModalLabel1" aria-hidden="true">
-                            <div className="modal-dialog" role="document">
-                                <div className="modal-content">
-                                    <div className="modal-header">
-                                        <h5 className="modal-title" id="exampleModalLabel1">Lütfen bir liste ekleyiniz.</h5>
-                                        <button type="button" className="close" data-dismiss="modal" aria-label="Close">
-                                            <span aria-hidden="true">&times;</span>
-                                        </button>
-                                    </div>
-                                    <div className="modal-body">
-                                        <input value={listName} onChange={e => listNameupdate(e.target.value)} className="form-control" ></input>
-                                    </div>
-                                    <div className="modal-footer">
-                                        <button type="button" className="btn btn-secondary " data-dismiss="modal">Geri</button>
-                                        <button type="button" onClick={handleSubmit} className="btn btn-primary ">Kaydet</button>
-                                    </div>
+                        <Button style={{ float: 'right', textDecoration: 'none' }} variant="success btn-sm" onClick={handleShow2}>
+                            Add List
+                        </Button>
+                        <Modal show={show2} onHide={handleClose2}>
+                            <Modal.Header closeButton>
+                                <Modal.Title>Eklemek istediğiniz listenizi giriniz</Modal.Title>
+                            </Modal.Header>
+                            <Modal.Body><input value={ListName} onChange={e => setlistName(e.target.value)} className="form-control" ></input></Modal.Body>
+                            <Modal.Footer>
+                                <Button variant="secondary" onClick={handleClose2}>
+                                    Close
+                                </Button>
+                                <Button variant="primary" onClick={handleSubmit}>
+                                    Save
+                                </Button>
+                            </Modal.Footer>
+                        </Modal>
+                    </div>
+                    <div className="col-8" style={{ display: 'none' }}>
+                        <div className='body'>
+                            <div className="row">
+                                <div className="col-12">
+                                    <div><strong>{showlistName}</strong><div style={{ display: 'flex', alignItems: 'center', float: 'right', height: '2vh' }}> <strong>Watched/Unwatched </strong></div></div>
+                                    {title && title.map(item => (
+                                        <ul className="list-group" key={item.movieId} data={item}>
+                                            <li className="list-group-item"><strong>{item.title}</strong><button type='button' style={{ border: item.watched ? 'green' : 'red', color: item.watched ? 'green' : 'red', float: 'right' }} key={item.id} onClick={() => handlewatched(item.id)} className='btn btn-outline-light btn-sm'>{item.watched ? '✓' : 'X'}</button>
+                                                <button onClick={() => handledeleteMovie(item.id)} style={{ float: 'left', textDecoration: 'none', color: 'red' }} className="btn btn-link btn-sm">X</button>
+                                            </li>
+                                        </ul>
+                                    ))}
+                                    <br />
+                                    <Button style={{ float: 'right', textDecoration: 'none' }} variant="success btn-sm" onClick={handleShow}>Add Movie</Button>
+                                    <Modal show={show} onHide={handleClose}>
+                                        <Modal.Header closeButton>
+                                            <Modal.Title>Eklemek istediğiniz filmi seçiniz</Modal.Title>
+                                        </Modal.Header>
+                                        <Modal.Body><select className="custom-select" value={movielistId} onChange={handleSelectChange} >
+                                            <option value='-1'>Select an option</option>
+                                            {movies && movies.map(item => (
+                                                <option key={item.id} value={item.id}>{item.title}</option>
+                                            ))}
+                                        </select></Modal.Body>
+                                        <Modal.Footer>
+                                            <Button variant="secondary" onClick={handleClose}>
+                                                Close
+                                            </Button>
+                                            <Button variant="primary" onClick={handleMovieSelect}>
+                                                Save
+                                            </Button>
+                                        </Modal.Footer>
+                                    </Modal>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div className="col-8">
-                        {<Detail showDetails={showDetails} />}
                     </div>
                 </div>
             </div>
