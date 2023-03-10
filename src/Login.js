@@ -19,7 +19,7 @@ const Login = () => {
                 "email": email,
                 "password": password
             };
-            fetch("https://localhost:7164/api/Auth/CreateToken", {
+            fetch("https://localhost:44382/api/Auth/CreateToken", {
                 method: 'POST',
                 headers: { 'content-type': 'application/json;' },
                 body: JSON.stringify(inputobj),

@@ -55,7 +55,7 @@ const Register = () => {
         e.preventDefault();
         let regobj = { userName, email, password };
         if (IsValidate()) {
-            fetch("https://localhost:7164/api/User/CreateUser", {
+            fetch("https://localhost:44382/api/User/CreateUser", {
                 method: "POST",
                 headers: { 'content-type': 'application/json' },
                 body: JSON.stringify(regobj)

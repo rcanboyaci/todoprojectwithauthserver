@@ -10,15 +10,14 @@ function Home() {
     const [show, setShow] = useState(false);
     const [show1, setShow1] = useState(false);
     const [show2, setShow2] = useState(false);
-    const [todolist, todolistupdate] = useState([]);
-    const [displayemail, displayemailupdate] = useState('');
-    const [ListName, setlistName] = useState('');
     const [showlistName, showlistNameupdate] = useState('');
-    const [id, idupdate] = useState(null);
-    const [title, titleupdate] = useState(null);
+    const [displayemail, displayemailupdate] = useState('');
+    const [todolist, todolistupdate] = useState([]);
     const [movies, setmovies] = useState([]);
-    const [movielistId, movielistIdUpdate] = useState(0);
-    const [movietodoList, setmovietodoList] = useState([]);
+    const [ListName, setlistName] = useState('');
+    const [title, titleupdate] = useState('');
+    const [id, idupdate] = useState(null);
+    const [movielistId, movielistIdUpdate] = useState('');
     const [movietodoListwatched, setmovietodoListwatched] = useState(null);
 
     useEffect(() => {
@@ -70,11 +69,9 @@ function Home() {
             }).then((res) => {
                 return res.json();
             }).then((resp) => {
-                setlistName(resp.data.listName);
+                todolistupdate([...todolist, resp.data]);
                 handleClose2();
             });
-            //window.location.reload();
-
         }
     }
 
@@ -84,13 +81,24 @@ function Home() {
             let listName = ListName;
             let jwttoken = sessionStorage.getItem('jwttoken');
             let regobj = { id, listName };
-            fetch("https://localhost:7089/api/ToDoList/EditToDoList", {
+            fetch(`https://localhost:7089/api/ToDoList/EditToDoList`, {
                 method: "PUT",
                 headers: { 'content-type': 'application/json', 'Authorization': 'bearer ' + jwttoken },
                 body: JSON.stringify(regobj)
-            })
+            }).then(() => {
+                fetch("https://localhost:7089/api/ToDoList/GetAllToDoList", {
+                    method: "GET",
+                    headers: { 'Authorization': 'bearer ' + jwttoken }
+                }).then((res) => {
+                    return res.json();
+                }).then((resp) => {
+                    todolistupdate(resp.data);
+                }).catch((err) => {
+                    console.log(err.messsage)
+                });
+            });
             handleClose1();
-        }
+        };
     }
 
     const handleClick = (id) => {
@@ -107,13 +115,9 @@ function Home() {
                 'Authorization': 'bearer ' + jwttoken
             }
         }).then((res) => {
+            todolistupdate(todolist.filter((item) => item.id !== id));
             return res.json();
-        }).then((resp) => {
-            titleupdate(resp.data);
-        }).catch((err) => {
-            console.log(err.messsage)
-        });
-        window.location.reload();
+        })
     };
 
     function handleButtonClick(id, listName) {
@@ -165,7 +169,6 @@ function Home() {
         let jwttoken = sessionStorage.getItem('jwttoken');
         let todolistId = id;
         let movieId = movielistId;
-        console.log(movieId);
         let regobj = { todolistId, movieId };
         fetch("https://localhost:7089/api/MovieToDoList/SaveMovieToDoList", {
             method: "POST",
@@ -177,10 +180,23 @@ function Home() {
             if (resp.data === null) {
                 toast.info(`${resp.errors}`);
             }
-            movielistIdUpdate(resp);
-            handleClose();
         }).catch(error => {
             console.error('Hata:', error);
+        }).then(() => {
+            fetch(`https://localhost:7089/api/MovieToDoList/GetByListIdWithMovie/${todolistId}`, {
+                method: "GET",
+                headers: {
+                    'Authorization': 'bearer ' + jwttoken
+                }
+            }).then((res) => {
+                return res.json();
+            }).then((resp) => {
+                titleupdate(resp.data);
+            })
+                .catch((err) => {
+                    console.log(err.messsage);
+                });
+            handleClose();
         })
     };
 
@@ -191,13 +207,11 @@ function Home() {
             method: "DELETE",
             headers: { 'content-type': 'application/json', 'Authorization': 'bearer ' + jwttoken },
         }).then((res) => {
+            titleupdate(title.filter((item) => item.id !== mId));
             return res.json();
-        }).then((resp) => {
-            setmovietodoList(resp);
         }).catch((err) => {
             console.log(err.messsage);
         });
-        window.location.reload();
     };
 
     function handlewatched(mtlId) {
@@ -246,7 +260,7 @@ function Home() {
                 <div className="row">
                     <div className="col-4">
                         <div><strong>My List</strong></div>
-                        {todolist && todolist.map(item => (
+                        {todolist && todolist.sort((a, b) => a.id - b.id).map(item => (
                             <ul className="list-group" key={item.id} data={item}>
                                 <li className="list-group-item"><strong>{item.listName}</strong><button type='button' style={{ float: 'right' }} onClick={() => handleButtonClick(item.id, item.listName)} className='btn btn-outline-dark btn-sm'>Detail</button>
                                     <Button style={{ float: 'right' }} onClick={() => handleClick(item.id)} variant="secondary btn-sm">Edit</Button><button style={{ float: 'left', textDecoration: 'none', color: 'red' }} onClick={() => deletehandleClick(item.id)} className="btn btn-link btn-sm">X</button>
@@ -257,7 +271,7 @@ function Home() {
                             <Modal.Header closeButton>
                                 <Modal.Title>Güncellemek istediğiniz listeyi giriniz</Modal.Title>
                             </Modal.Header>
-                            <Modal.Body><input value={ListName} onChange={e => setlistName(e.target.value)} className="form-control" ></input></Modal.Body>
+                            <Modal.Body><input type='text' value={ListName} onChange={e => setlistName(e.target.value)} className="form-control" ></input></Modal.Body>
                             <Modal.Footer>
                                 <Button variant="secondary" onClick={handleClose1}>
                                     Close
@@ -291,7 +305,7 @@ function Home() {
                             <div className="row">
                                 <div className="col-12">
                                     <div><strong>{showlistName}</strong><div style={{ display: 'flex', alignItems: 'center', float: 'right', height: '2vh' }}> <strong>Watched/Unwatched </strong></div></div>
-                                    {title && title.map(item => (
+                                    {title && title.sort((a, b) => a.id - b.id).map(item => (
                                         <ul className="list-group" key={item.movieId} data={item}>
                                             <li className="list-group-item"><strong>{item.title}</strong><button type='button' style={{ border: item.watched ? 'green' : 'red', color: item.watched ? 'green' : 'red', float: 'right' }} key={item.id} onClick={() => handlewatched(item.id)} className='btn btn-outline-light btn-sm'>{item.watched ? '✓' : 'X'}</button>
                                                 <button onClick={() => handledeleteMovie(item.id)} style={{ float: 'left', textDecoration: 'none', color: 'red' }} className="btn btn-link btn-sm">X</button>
