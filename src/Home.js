@@ -69,8 +69,14 @@ function Home() {
             }).then((res) => {
                 return res.json();
             }).then((resp) => {
-                todolistupdate([...todolist, resp.data]);
-                handleClose2();
+                if (todolist === null) {
+                    todolistupdate([resp.data]);
+                    handleClose2();
+                }
+                else {
+                    todolistupdate([...todolist, resp.data]);
+                    handleClose2();
+                }
             });
         }
     }
@@ -116,9 +122,13 @@ function Home() {
             }
         }).then((res) => {
             todolistupdate(todolist.filter((item) => item.id !== id));
+            //titleupdate([]);
+            const col8 = document.querySelector('.col-8');
+            col8.style.display = 'none';
             return res.json();
         })
     };
+
 
     function handleButtonClick(id, listName) {
         const col8 = document.querySelector('.col-8');
@@ -262,8 +272,8 @@ function Home() {
                         <div><strong>My List</strong></div>
                         {todolist && todolist.sort((a, b) => a.id - b.id).map(item => (
                             <ul className="list-group" key={item.id} data={item}>
-                                <li className="list-group-item"><strong>{item.listName}</strong><button type='button' style={{ float: 'right' }} onClick={() => handleButtonClick(item.id, item.listName)} className='btn btn-outline-dark btn-sm'>Detail</button>
-                                    <Button style={{ float: 'right' }} onClick={() => handleClick(item.id)} variant="secondary btn-sm">Edit</Button><button style={{ float: 'left', textDecoration: 'none', color: 'red' }} onClick={() => deletehandleClick(item.id)} className="btn btn-link btn-sm">X</button>
+                                <li className="list-group-item"><strong>{item.listName}</strong><button type='button' style={{ float: 'right' }} onClick={() => handleButtonClick(item.id, item.listName)} className='btn btn-outline-dark btn-sm'>☰</button>
+                                    <Button style={{ float: 'right' }} onClick={() => handleClick(item.id)} variant="secondary btn-sm">Edit</Button><button style={{ float: 'left', textDecoration: 'none', color: 'red' }} onClick={() => deletehandleClick(item.id)} className="btn btn-link btn-sm">✕</button>
                                 </li>
                             </ul>
                         ))}
@@ -300,7 +310,7 @@ function Home() {
                             </Modal.Footer>
                         </Modal>
                     </div>
-                    <div className="col-8" style={{ display: 'none' }}>
+                    <div className="col-8" style={{ display: 'none' }} >
                         <div className='body'>
                             <div className="row">
                                 <div className="col-12">
@@ -308,7 +318,7 @@ function Home() {
                                     {title && title.sort((a, b) => a.id - b.id).map(item => (
                                         <ul className="list-group" key={item.movieId} data={item}>
                                             <li className="list-group-item"><strong>{item.title}</strong><button type='button' style={{ border: item.watched ? 'green' : 'red', color: item.watched ? 'green' : 'red', float: 'right' }} key={item.id} onClick={() => handlewatched(item.id)} className='btn btn-outline-light btn-sm'>{item.watched ? '✓' : 'X'}</button>
-                                                <button onClick={() => handledeleteMovie(item.id)} style={{ float: 'left', textDecoration: 'none', color: 'red' }} className="btn btn-link btn-sm">X</button>
+                                                <button onClick={() => handledeleteMovie(item.id)} style={{ float: 'left', textDecoration: 'none', color: 'red' }} className="btn btn-link btn-sm">✕</button>
                                             </li>
                                         </ul>
                                     ))}
@@ -338,6 +348,9 @@ function Home() {
                         </div>
                     </div>
                 </div>
+            </div>
+            <div className="footer">      
+
             </div>
         </div >
     );

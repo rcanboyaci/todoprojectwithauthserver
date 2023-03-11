@@ -55,15 +55,6 @@ const Login = () => {
             toast.warning(errormessage)
         }
         else {
-            // if (/^[a-zA-Z0-9]+@[a-zA-Z0-9]+\.[A-Za-z]+$/.test(email)) 
-            // {
-
-            // } 
-            // else 
-            // {
-            //     isproceed = false;
-            //     toast.warning('Please enter the valid email')
-            // }
             if (/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/.test(password)) {
             }
             else {
