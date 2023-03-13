@@ -20,16 +20,21 @@ function Home() {
     const [id, idupdate] = useState(null);
     const [movielistId, movielistIdUpdate] = useState('');
     const [movietodoListwatched, setmovietodoListwatched] = useState(null);
-
+    const handleClose = () => setShow(false);
+    const handleShow = () => setShow(true);
+    const handleClose1 = () => setShow1(false);
+    const handleShow1 = () => setShow1(true);
+    const handleClose2 = () => setShow2(false);
+    const handleShow2 = () => setShow2(true);
     useEffect(() => {
         let email = sessionStorage.getItem('email');
+        let jwttoken = sessionStorage.getItem('jwttoken');
         if (email === '' || email === null) {
             usenavigate('/login')
         }
         else {
             displayemailupdate(email);
         }
-        let jwttoken = sessionStorage.getItem('jwttoken');
         fetch("https://localhost:7089/api/ToDoList/GetAllToDoList", {
             headers: {
                 'Authorization': 'bearer ' + jwttoken
@@ -41,7 +46,6 @@ function Home() {
         }).catch((err) => {
             console.log(err.messsage)
         });
-
     }, [usenavigate]);
 
     const IsValidate = () => {
@@ -121,7 +125,7 @@ function Home() {
             headers: {
                 'Authorization': 'bearer ' + jwttoken
             }
-        }).then((res) => {
+        }).then(() => {
             todolistupdate(todolist.filter((item) => item.id !== id));
             if (showDetails === id) {
                 setShowDetails(null);
@@ -131,7 +135,7 @@ function Home() {
 
 
     function handleButtonClick(id, listName) {
-        setShowDetails(prevIndex => prevIndex === id ? null : id);
+        setShowDetails(prevId => prevId === id ? null : id);
         idupdate(id);
         showlistNameupdate(listName);
         let jwttoken = sessionStorage.getItem('jwttoken');
@@ -230,7 +234,8 @@ function Home() {
                     ...item,
                     watched: !item.watched
                 };
-            } else {
+            } 
+            else {
                 return item;
             }
         }));
@@ -250,13 +255,6 @@ function Home() {
             console.log(err.messsage);
         });
     }
-
-    const handleClose = () => setShow(false);
-    const handleShow = () => setShow(true);
-    const handleClose1 = () => setShow1(false);
-    const handleShow1 = () => setShow1(true);
-    const handleClose2 = () => setShow2(false);
-    const handleShow2 = () => setShow2(true);
 
     return (
         <div>
