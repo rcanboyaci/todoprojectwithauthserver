@@ -7,7 +7,8 @@ import Modal from 'react-bootstrap/Modal';
 
 function Home() {
     const usenavigate = useNavigate();
-    const [show, setShow] = useState(false);
+    const [showDetails, setShowDetails] = useState({}, false);
+    const [show, setShow] = useState(false);;
     const [show1, setShow1] = useState(false);
     const [show2, setShow2] = useState(false);
     const [showlistName, showlistNameupdate] = useState('');
@@ -122,17 +123,15 @@ function Home() {
             }
         }).then((res) => {
             todolistupdate(todolist.filter((item) => item.id !== id));
-            //titleupdate([]);
-            const col8 = document.querySelector('.col-8');
-            col8.style.display = 'none';
-            return res.json();
+            if (showDetails === id) {
+                setShowDetails(null);
+            }
         })
     };
 
 
     function handleButtonClick(id, listName) {
-        const col8 = document.querySelector('.col-8');
-        col8.style.display = 'block';
+        setShowDetails(prevIndex => prevIndex === id ? null : id);
         idupdate(id);
         showlistNameupdate(listName);
         let jwttoken = sessionStorage.getItem('jwttoken');
@@ -272,8 +271,8 @@ function Home() {
                         <div><strong>My List</strong></div>
                         {todolist && todolist.sort((a, b) => a.id - b.id).map(item => (
                             <ul className="list-group" key={item.id} data={item}>
-                                <li className="list-group-item"><strong>{item.listName}</strong><button type='button' style={{ float: 'right' }} onClick={() => handleButtonClick(item.id, item.listName)} className='btn btn-outline-dark btn-sm'>☰</button>
-                                    <Button style={{ float: 'right' }} onClick={() => handleClick(item.id)} variant="secondary btn-sm">Edit</Button><button style={{ float: 'left', textDecoration: 'none', color: 'red' }} onClick={() => deletehandleClick(item.id)} className="btn btn-link btn-sm">✕</button>
+                                <li className="list-group-item" style={{ marginTop: '15px' }}><strong>{item.listName}</strong><button type='button' style={{ float: 'right' }} onClick={() => handleButtonClick(item.id, item.listName)} className='btn btn-outline-dark btn-sm'>☰</button>
+                                    <Button style={{ float: 'right' }} onClick={() => handleClick(item.id)} variant="secondary btn-sm">Edit</Button><button style={{ textAlign: 'center', float: 'left',marginLeft:'1px',textDecoration: 'none', color: 'white', border: '1px solid dark', backgroundColor: 'red', width: '30px', height: '30px', borderRadius: '25px', MozBorderRadius: '30px', WebkitBorderRadius: '30px' }} onClick={() => deletehandleClick(item.id)} className="btn btn-link btn-sm">X</button>
                                 </li>
                             </ul>
                         ))}
@@ -310,46 +309,49 @@ function Home() {
                             </Modal.Footer>
                         </Modal>
                     </div>
-                    <div className="col-8" style={{ display: 'none' }} >
-                        <div className='body'>
-                            <div className="row">
-                                <div className="col-12">
-                                    <div><strong>{showlistName}</strong><div style={{ display: 'flex', alignItems: 'center', float: 'right', height: '2vh' }}> <strong>Watched/Unwatched </strong></div></div>
-                                    {title && title.sort((a, b) => a.id - b.id).map(item => (
-                                        <ul className="list-group" key={item.movieId} data={item}>
-                                            <li className="list-group-item"><strong>{item.title}</strong><button type='button' style={{ border: item.watched ? 'green' : 'red', color: item.watched ? 'green' : 'red', float: 'right' }} key={item.id} onClick={() => handlewatched(item.id)} className='btn btn-outline-light btn-sm'>{item.watched ? '✓' : 'X'}</button>
-                                                <button onClick={() => handledeleteMovie(item.id)} style={{ float: 'left', textDecoration: 'none', color: 'red' }} className="btn btn-link btn-sm">✕</button>
-                                            </li>
-                                        </ul>
-                                    ))}
-                                    <br />
-                                    <Button style={{ float: 'right', textDecoration: 'none' }} variant="success btn-sm" onClick={handleShow}>Add Movie</Button>
-                                    <Modal show={show} onHide={handleClose}>
-                                        <Modal.Header closeButton>
-                                            <Modal.Title>Eklemek istediğiniz filmi seçiniz</Modal.Title>
-                                        </Modal.Header>
-                                        <Modal.Body><select className="custom-select" value={movielistId} onChange={handleSelectChange} >
-                                            <option value='-1'>Select an option</option>
-                                            {movies && movies.map(item => (
-                                                <option key={item.id} value={item.id}>{item.title}</option>
-                                            ))}
-                                        </select></Modal.Body>
-                                        <Modal.Footer>
-                                            <Button variant="secondary" onClick={handleClose}>
-                                                Close
-                                            </Button>
-                                            <Button variant="primary" onClick={handleMovieSelect}>
-                                                Save
-                                            </Button>
-                                        </Modal.Footer>
-                                    </Modal>
+                    {showDetails === id && (
+                        <div className="col-8">
+                            <div className='body'>
+                                <div className="row">
+                                    <div className="col-12" >
+                                        <div><strong>{showlistName}</strong><div style={{ display: 'flex', alignItems: 'center', float: 'right', height: '2vh', marginRight: '12px' }}>✔️/✘</div></div>
+                                        {title && title.sort((a, b) => a.id - b.id).map(item => (
+                                            <ul className="list-group" key={item.movieId} data={item}>
+                                                <li className="list-group-item" style={{ marginTop: '15px' }} ><div style={{text:'center' }}>{item.title}<button type='button' style={{ border: item.watched ? 'green' : 'red', color: item.watched ? 'green' : 'red', float: 'right'}} key={item.id} onClick={() => handlewatched(item.id)} className='btn btn-outline-light btn-sm'>{item.watched ? '✔️' : '✘'}</button>
+                                                    <button onClick={() => handledeleteMovie(item.id)} style={{ textAlign: 'center', float: 'left',marginLeft:'1px',textDecoration: 'none', color: 'white', border: '1px solid dark', backgroundColor: 'red', width: '30px', height: '30px', borderRadius: '25px', MozBorderRadius: '30px', WebkitBorderRadius: '30px' }} className="btn btn-link btn-sm">X</button>
+                                                </div>
+                                                </li>
+                                            </ul>
+                                        ))}
+                                        <br />
+                                        <Button style={{ float: 'right', textDecoration: 'none' }} variant="success btn-sm" onClick={handleShow}>Add Movie</Button>
+                                        <Modal show={show} onHide={handleClose}>
+                                            <Modal.Header closeButton>
+                                                <Modal.Title>Eklemek istediğiniz filmi seçiniz</Modal.Title>
+                                            </Modal.Header>
+                                            <Modal.Body><select className="custom-select" value={movielistId} onChange={handleSelectChange} >
+                                                <option value='-1'>Select an option</option>
+                                                {movies && movies.map(item => (
+                                                    <option key={item.id} value={item.id}>{item.title}</option>
+                                                ))}
+                                            </select></Modal.Body>
+                                            <Modal.Footer>
+                                                <Button variant="secondary" onClick={handleClose}>
+                                                    Close
+                                                </Button>
+                                                <Button variant="primary" onClick={handleMovieSelect}>
+                                                    Save
+                                                </Button>
+                                            </Modal.Footer>
+                                        </Modal>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    )}
                 </div>
             </div>
-            <div className="footer">      
+            <div className="footer">
 
             </div>
         </div >

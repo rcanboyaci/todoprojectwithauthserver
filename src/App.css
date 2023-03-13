@@ -26,7 +26,7 @@
 
 
 .App-link {
-  color: #61dafb;
+  color: white;
 }
 
 .errmsg {
@@ -42,13 +42,13 @@ app-check {
 .header {
   width: 100%;
   background-color: orange;
-  color: cyan;
+  color: white;
   padding: 1%;
 }
 
 a {
   text-decoration: none !important;
-  color: cyan !important;
+  color: white !important;
   padding: 2px;
 }
 
