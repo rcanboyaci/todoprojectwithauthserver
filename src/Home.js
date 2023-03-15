@@ -26,6 +26,8 @@ function Home() {
     const handleShow1 = () => setShow1(true);
     const handleClose2 = () => setShow2(false);
     const handleShow2 = () => setShow2(true);
+
+    
     useEffect(() => {
         let email = sessionStorage.getItem('email');
         let jwttoken = sessionStorage.getItem('jwttoken');
