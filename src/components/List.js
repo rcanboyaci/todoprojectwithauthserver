@@ -4,6 +4,7 @@ import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
 import { toast } from "react-toastify";
 import ListDetail from "./ListDetail";
+import { fetchWithHeaders } from "../helpers/fetchHelpers";
 
 function List() {
   const usenavigate = useNavigate();
@@ -18,28 +19,19 @@ function List() {
   const [id, setListId] = useState(null);
   const [title, setTitle] = useState("");
   const [showListname, setShowListname] = useState("");
-  const [showListDetails, setShowListDetails] = useState({},false);
+  const [showListDetails, setShowListDetails] = useState({}, false);
 
   useEffect(() => {
     let email = sessionStorage.getItem("email");
-    let jwttoken = sessionStorage.getItem("jwttoken");
     if (email === "" || email === null) {
       usenavigate("/login");
     } else {
-      fetch("https://localhost:7089/api/ToDoList/GetAllToDoList", {
-        headers: {
-          Authorization: "bearer " + jwttoken,
-        },
-      })
-        .then((res) => {
-          return res.json();
-        })
-        .then((resp) => {
-          setList(resp.data);
-        })
-        .catch((err) => {
-          console.log(err.messsage);
-        });
+      fetchWithHeaders(
+        "https://localhost:7089/api/ToDoList/GetAllToDoList",
+        "GET"
+      ).then((resp) => {
+        setList(resp.data);
+      });
     }
   }, [usenavigate]);
 
@@ -59,29 +51,20 @@ function List() {
   function addList(e) {
     e.preventDefault();
     if (ListValidate()) {
-      let jwttoken = sessionStorage.getItem("jwttoken");
-      let listName = listname;
-      let regobj = { listName };
-      fetch("https://localhost:7089/api/ToDoList/SaveToDoList", {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          Authorization: "bearer " + jwttoken,
-        },
-        body: JSON.stringify(regobj),
-      })
-        .then((res) => {
-          return res.json();
-        })
-        .then((resp) => {
-          if (list === null) {
-            setList([resp.data]);
-            addListCloseModal();
-          } else {
-            setList([...list, resp.data]);
-            addListCloseModal();
-          }
-        });
+      fetchWithHeaders(
+        "https://localhost:7089/api/ToDoList/SaveToDoList",
+        "POST",
+        { listname }
+      ).then((resp) => {
+        if (list === null) {
+          console.log(list);
+          setList([resp.data]);
+          addListCloseModal();
+        } else {
+          setList([...list, resp.data]);
+          addListCloseModal();
+        }
+      });
     }
   }
 
@@ -93,30 +76,18 @@ function List() {
   function updateList(e) {
     e.preventDefault();
     if (ListValidate()) {
-      let listName = listname;
-      let jwttoken = sessionStorage.getItem("jwttoken");
-      let regobj = { id, listName };
-      fetch(`https://localhost:7089/api/ToDoList/EditToDoList`, {
-        method: "PUT",
-        headers: {
-          "content-type": "application/json",
-          Authorization: "bearer " + jwttoken,
-        },
-        body: JSON.stringify(regobj),
-      }).then(() => {
-        fetch("https://localhost:7089/api/ToDoList/GetAllToDoList", {
-          method: "GET",
-          headers: { Authorization: "bearer " + jwttoken },
-        })
-          .then((res) => {
-            return res.json();
-          })
-          .then((resp) => {
-            setList(resp.data);
-          })
-          .catch((err) => {
-            console.log(err.messsage);
-          });
+      let regobj = { id, listname };
+      fetchWithHeaders(
+        "https://localhost:7089/api/ToDoList/EditToDoList",
+        "PUT",
+        regobj
+      ).then(() => {
+        fetchWithHeaders(
+          "https://localhost:7089/api/ToDoList/GetAllToDoList",
+          "GET"
+        ).then((resp) => {
+          setList(resp.data);
+        });
       });
       updateListCloseModal();
     }
@@ -124,13 +95,10 @@ function List() {
 
   function deleteList(id) {
     setListId(id);
-    let jwttoken = sessionStorage.getItem("jwttoken");
-    fetch(`https://localhost:7089/api/ToDoList/RemoveToDoList/${id}`, {
-      method: "DELETE",
-      headers: {
-        Authorization: "bearer " + jwttoken,
-      },
-    }).then(() => {
+    fetchWithHeaders(
+      `https://localhost:7089/api/ToDoList/RemoveToDoList/${id}`,
+      "DELETE"
+    ).then(() => {
       setList(list.filter((item) => item.id !== id));
       if (showListDetails === id) {
         setShowListDetails(null);
@@ -142,28 +110,15 @@ function List() {
     setShowListDetails((prevId) => (prevId === id ? null : id));
     setListId(id);
     setShowListname(listname);
-    let jwttoken = sessionStorage.getItem("jwttoken");
-    fetch(
+    fetchWithHeaders(
       `https://localhost:7089/api/MovieToDoList/GetByListIdWithMovie/${id}`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: "bearer " + jwttoken,
-        },
+      "GET"
+    ).then((resp) => {
+      if (resp.data === null) {
+        toast.info(`${resp.errors}`);
       }
-    )
-      .then((res) => {
-        return res.json();
-      })
-      .then((resp) => {
-        if (resp.data === null) {
-          toast.info(`${resp.errors}`);
-        }
-        setTitle(resp.data);
-      })
-      .catch((err) => {
-        console.log(err.messsage);
-      });
+      setTitle(resp.data);
+    });
   }
 
   return (

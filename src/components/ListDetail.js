@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
 import { toast } from "react-toastify";
+import { fetchWithHeaders } from "../helpers/fetchHelpers";
 
 const ListDetail = (props) => {
   const [addMovieModal, setAddMovieModal] = useState(false);
@@ -13,22 +14,12 @@ const ListDetail = (props) => {
   const [watched, setWatched] = useState(null);
 
   useEffect(() => {
-    let jwttoken = sessionStorage.getItem("jwttoken");
-    fetch("https://localhost:7089/api/Movie/GetAllMovie", {
-      method: "GET",
-      headers: {
-        Authorization: "bearer " + jwttoken,
-      },
-    })
-      .then((res) => {
-        return res.json();
-      })
-      .then((resp) => {
-        setMovies(resp.data);
-      })
-      .catch((err) => {
-        console.log(err.messsage);
-      });
+    fetchWithHeaders(
+      "https://localhost:7089/api/Movie/GetAllMovie",
+      "GET"
+    ).then((resp) => {
+      setMovies(resp.data);
+    });
   }, []);
 
   function SelectMovie(e) {
@@ -37,71 +28,36 @@ const ListDetail = (props) => {
   }
 
   function AddMovie() {
-    let jwttoken = sessionStorage.getItem("jwttoken");
     let todolistId = props.goListId;
     let movieId = movieToDoListId;
     let regobj = { todolistId, movieId };
-    fetch("https://localhost:7089/api/MovieToDoList/SaveMovieToDoList", {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        Authorization: "bearer " + jwttoken,
-      },
-      body: JSON.stringify(regobj),
-    })
-      .then((res) => {
-        return res.json();
-      })
+    fetchWithHeaders(
+      "https://localhost:7089/api/MovieToDoList/SaveMovieToDoList",
+      "POST",
+      regobj
+    )
       .then((resp) => {
         if (resp.data === null) {
           toast.info(`${resp.errors}`);
         }
       })
-      .catch((error) => {
-        console.error("Hata:", error);
-      })
       .then(() => {
-        fetch(
+        fetchWithHeaders(
           `https://localhost:7089/api/MovieToDoList/GetByListIdWithMovie/${todolistId}`,
-          {
-            method: "GET",
-            headers: {
-              Authorization: "bearer " + jwttoken,
-            },
-          }
-        )
-          .then((res) => {
-            return res.json();
-          })
-          .then((resp) => {
-            props.goSetTitle(resp.data);
-          })
-          .catch((err) => {
-            console.log(err.messsage);
-          });
+          "GET"
+        ).then((resp) => {
+          props.goSetTitle(resp.data);
+        });
         addMovieCloseModal();
       });
   }
 
   function DeleteMovie(mId) {
-    let jwttoken = sessionStorage.getItem("jwttoken");
-    fetch(
+    fetchWithHeaders(
       `https://localhost:7089/api/MovieToDoList/RemoveMovieToDoList/${mId}`,
-      {
-        method: "DELETE",
-        headers: {
-          "content-type": "application/json",
-          Authorization: "bearer " + jwttoken,
-        },
-      }
-    )
-      .then((res) => {
-        props.goSetTitle(props.goTitle.filter((item) => item.id !== mId));
-        return res.json();
-      })
-      .catch((err) => {
-        console.log(err.messsage);
-      });
+      "DELETE"
+    );
+    props.goSetTitle(props.goTitle.filter((item) => item.id !== mId));
   }
 
   function WatchedMovie(mtlId) {
@@ -117,27 +73,16 @@ const ListDetail = (props) => {
         }
       })
     );
-    let jwttoken = sessionStorage.getItem("jwttoken");
     let id = mtlId;
     let watched = true;
     let regobj = { id, watched };
-    fetch("https://localhost:7089/api/MovieToDoList/EditMovieToDoList", {
-      method: "PUT",
-      headers: {
-        "content-type": "application/json",
-        Authorization: "bearer " + jwttoken,
-      },
-      body: JSON.stringify(regobj),
-    })
-      .then((res) => {
-        return res.json();
-      })
-      .then((resp) => {
-        setWatched(resp);
-      })
-      .catch((err) => {
-        console.log(err.messsage);
-      });
+    fetchWithHeaders(
+      "https://localhost:7089/api/MovieToDoList/EditMovieToDoList",
+      "PUT",
+      regobj
+    ).then((resp) => {
+      setWatched(resp);
+    });
   }
 
   return (

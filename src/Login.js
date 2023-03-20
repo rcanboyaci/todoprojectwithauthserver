@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { toast } from "react-toastify";
+import { fetchWithHeaders } from "./helpers/fetchHelpers";
 
 const Login = () => {
   const usenavigate = useNavigate();
@@ -20,41 +21,38 @@ const Login = () => {
     password: Yup.string()
       .matches(
         /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/,
-        "Password must contain at least minimum six characters, at least one letter, one number and one special character."
+        "Şifre en az altı karakter, en az bir harf, bir rakam ve bir özel karakter içermelidir."
       )
-      .required("Parola zorunludur"),
+      .required("Password alanı boş bırakılamaz."),
     email: Yup.string()
-      .email("Lütfen geçerli bir email adresi giriniz.")
-      .required("Email zorunludur."),
+      .email(
+        "Yanlış biçimde email girdiniz Örn:xyz@xyz.com biçiminde olmalıdır."
+      )
+      .required("Email alanı boş bırakılamaz."),
   });
 
-  const LoginSubmit = async (values, { setErrors }) => {
+  const LoginSubmit = (values, { setErrors }) => {
     const inputValues = {
       password: values.password,
       email: values.email,
     };
-    try {
-      const response = await fetch(
+      fetchWithHeaders(
         "https://localhost:7164/api/Auth/CreateToken",
-        {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify(inputValues),
+        "POST",
+        inputValues
+      ).then((resp)=>{
+        if (resp.statusCode===200) {
+          toast.success("Giriş işlemi başarılı");
+          sessionStorage.setItem("email", values.email);
+          console.log(resp.data.accessToken);
+          sessionStorage.setItem("jwttoken", resp.data.accessToken);
+          usenavigate("/");
+        } else {
+          console.log(resp.error.errors);
+          setErrors({ error: resp.error.errors });
         }
-      );
-      const tokendata = await response.json();
-      if (response.ok) {
-        toast.success("Giriş işlemi başarılı");
-        sessionStorage.setItem("email", values.email);
-        sessionStorage.setItem("jwttoken", tokendata.data.accessToken);
-        usenavigate("/");
-      } else {
-        setErrors({ error: tokendata.error.errors });
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  };
+      });
+}
 
   return (
     <div>
