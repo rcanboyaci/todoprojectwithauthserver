@@ -20,6 +20,7 @@ function List() {
   const [title, setTitle] = useState("");
   const [showListname, setShowListname] = useState("");
   const [showListDetails, setShowListDetails] = useState({}, false);
+  const apiUrl = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
     let email = sessionStorage.getItem("email");
@@ -27,14 +28,11 @@ function List() {
       usenavigate("/login");
     } else {
       fetchWithHeaders(
-        // "https://localhost:7089/api/ToDoList/GetAllToDoList",
-        `${process.env.REACT_APP_API_URL}/api/ToDoList/GetAllToDoList`,
+        `${apiUrl}/api/ToDoList/GetAllToDoList`,
         "GET"
       ).then((resp) => {
-        console.lof(resp);
         setList(resp.data);
       });
-      console.log();
     }
   }, [usenavigate]);
 

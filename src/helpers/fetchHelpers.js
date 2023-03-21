@@ -4,12 +4,14 @@ const headers = {
 };
 
 export const fetchWithHeaders = async (url, method, body) => {
-  const response = await fetch(url, {
-    method,
-    headers,
-    body: body && JSON.stringify(body),
-  });
-  return response.json().catch((err) => {
-    console.log(err.messsage);
-  });
+  try {
+    const response = await fetch(url, {
+      method,
+      headers,
+      body: body && JSON.stringify(body),
+    });
+    return response.json();
+  } catch (err) {
+    console.error(err.message);
+  }
 };
