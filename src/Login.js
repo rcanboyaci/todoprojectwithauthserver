@@ -44,11 +44,9 @@ const Login = () => {
         if (resp.statusCode===200) {
           toast.success("Giriş işlemi başarılı");
           sessionStorage.setItem("email", values.email);
-          console.log(resp.data.accessToken);
           sessionStorage.setItem("jwttoken", resp.data.accessToken);
           usenavigate("/");
         } else {
-          console.log(resp.error.errors);
           setErrors({ error: resp.error.errors });
         }
       });
