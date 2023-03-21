@@ -4,6 +4,7 @@ import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
 import { toast } from "react-toastify";
 import { fetchWithHeaders } from "../helpers/fetchHelpers";
+import config from "../config";
 
 const ListDetail = (props) => {
   const [addMovieModal, setAddMovieModal] = useState(false);
@@ -14,10 +15,7 @@ const ListDetail = (props) => {
   const [watched, setWatched] = useState(null);
 
   useEffect(() => {
-    fetchWithHeaders(
-      "https://localhost:7089/api/Movie/GetAllMovie",
-      "GET"
-    ).then((resp) => {
+    fetchWithHeaders(`${config.movieUrl}/GetAllMovie`, "GET").then((resp) => {
       setMovies(resp.data);
     });
   }, []);
@@ -32,7 +30,7 @@ const ListDetail = (props) => {
     let movieId = movieToDoListId;
     let regobj = { todolistId, movieId };
     fetchWithHeaders(
-      "https://localhost:7089/api/MovieToDoList/SaveMovieToDoList",
+      `${config.movieToDoListUrl}/SaveMovieToDoList`,
       "POST",
       regobj
     )
@@ -43,7 +41,7 @@ const ListDetail = (props) => {
       })
       .then(() => {
         fetchWithHeaders(
-          `https://localhost:7089/api/MovieToDoList/GetByListIdWithMovie/${todolistId}`,
+          `${config.movieToDoListUrl}/GetByListIdWithMovie/${todolistId}`,
           "GET"
         ).then((resp) => {
           props.goSetTitle(resp.data);
@@ -54,7 +52,7 @@ const ListDetail = (props) => {
 
   function DeleteMovie(mId) {
     fetchWithHeaders(
-      `https://localhost:7089/api/MovieToDoList/RemoveMovieToDoList/${mId}`,
+      `${config.movieToDoListUrl}/RemoveMovieToDoList/${mId}`,
       "DELETE"
     );
     props.goSetTitle(props.goTitle.filter((item) => item.id !== mId));
@@ -77,7 +75,7 @@ const ListDetail = (props) => {
     let watched = true;
     let regobj = { id, watched };
     fetchWithHeaders(
-      "https://localhost:7089/api/MovieToDoList/EditMovieToDoList",
+      `${config.movieToDoListUrl}/EditMovieToDoList`,
       "PUT",
       regobj
     ).then((resp) => {

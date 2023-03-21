@@ -36,21 +36,21 @@ const Login = () => {
       password: values.password,
       email: values.email,
     };
-      fetchWithHeaders(
-        "https://localhost:7164/api/Auth/CreateToken",
-        "POST",
-        inputValues
-      ).then((resp)=>{
-        if (resp.statusCode===200) {
-          toast.success("Giriş işlemi başarılı");
-          sessionStorage.setItem("email", values.email);
-          sessionStorage.setItem("jwttoken", resp.data.accessToken);
-          usenavigate("/");
-        } else {
-          setErrors({ error: resp.error.errors });
-        }
-      });
-}
+    fetchWithHeaders(
+      "https://localhost:7164/api/Auth/CreateToken",// giriş işlemi hatalı ise console ekranında gözüken api hatasını nasıl gideririrm.
+      "POST",
+      inputValues
+    ).then((resp) => {
+      if (resp.statusCode === 200) {
+        toast.success("Giriş işlemi başarılı");
+        sessionStorage.setItem("email", values.email);
+        sessionStorage.setItem("jwttoken", resp.data.accessToken);
+        usenavigate("/");
+      } else {
+        setErrors({ error: resp.error.errors });
+      }
+    });
+  };
 
   return (
     <div>

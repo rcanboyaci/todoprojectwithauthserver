@@ -5,6 +5,7 @@ import Modal from "react-bootstrap/Modal";
 import { toast } from "react-toastify";
 import ListDetail from "./ListDetail";
 import { fetchWithHeaders } from "../helpers/fetchHelpers";
+import config from "../config";
 
 function List() {
   const usenavigate = useNavigate();
@@ -20,19 +21,20 @@ function List() {
   const [title, setTitle] = useState("");
   const [showListname, setShowListname] = useState("");
   const [showListDetails, setShowListDetails] = useState({}, false);
-  const apiUrl = process.env.REACT_APP_API_URL;
 
   useEffect(() => {
-    let email = sessionStorage.getItem("email");
+    let email = sessionStorage.getItem("email"); //Liste yoksa çekmemem lazım.
     if (email === "" || email === null) {
       usenavigate("/login");
     } else {
-      fetchWithHeaders(
-        `${apiUrl}/api/ToDoList/GetAllToDoList`,
-        "GET"
-      ).then((resp) => {
-        setList(resp.data);
-      });
+      fetchWithHeaders(`${config.todoListUrl}/GetAllToDoList`, "GET").then(
+        (resp) => {
+          console.log(resp.data);
+          if (resp.lengt > 0) {
+            setList(resp.data);
+          }
+        }
+      );
     }
   }, [usenavigate]);
 
@@ -52,13 +54,10 @@ function List() {
   function addList(e) {
     e.preventDefault();
     if (ListValidate()) {
-      fetchWithHeaders(
-        "https://localhost:7089/api/ToDoList/SaveToDoList",
-        "POST",
-        { listname }
-      ).then((resp) => {
+      fetchWithHeaders(`${config.todoListUrl}/SaveToDoList`, "POST", {
+        listname,
+      }).then((resp) => {
         if (list === null) {
-          console.log(list);
           setList([resp.data]);
           addListCloseModal();
         } else {
@@ -79,16 +78,15 @@ function List() {
     if (ListValidate()) {
       let regobj = { id, listname };
       fetchWithHeaders(
-        "https://localhost:7089/api/ToDoList/EditToDoList",
+        `${config.todoListUrl}/EditToDoList`,
         "PUT",
         regobj
       ).then(() => {
-        fetchWithHeaders(
-          "https://localhost:7089/api/ToDoList/GetAllToDoList",
-          "GET"
-        ).then((resp) => {
-          setList(resp.data);
-        });
+        fetchWithHeaders(`${config.todoListUrl}/GetAllToDoList`, "GET").then(
+          (resp) => {
+            setList(resp.data);
+          }
+        );
       });
       updateListCloseModal();
     }
@@ -97,7 +95,7 @@ function List() {
   function deleteList(id) {
     setListId(id);
     fetchWithHeaders(
-      `https://localhost:7089/api/ToDoList/RemoveToDoList/${id}`,
+      `${config.todoListUrl}/RemoveToDoList/${id}`,
       "DELETE"
     ).then(() => {
       setList(list.filter((item) => item.id !== id));
@@ -111,15 +109,20 @@ function List() {
     setShowListDetails((prevId) => (prevId === id ? null : id));
     setListId(id);
     setShowListname(listname);
-    fetchWithHeaders(
-      `https://localhost:7089/api/MovieToDoList/GetByListIdWithMovie/${id}`,
-      "GET"
-    ).then((resp) => {
-      if (resp.data === null) {
-        toast.info(`${resp.errors}`);
-      }
-      setTitle(resp.data);
-    });
+    console.log(title.indexOf());
+    if (title.indexOf !== -1) {
+      fetchWithHeaders(
+        `${config.movieToDoListUrl}/GetByListIdWithMovie/${id}`,
+        "GET"
+      ).then((resp) => {
+        if (resp.data === null) {
+          toast.info(`${resp.errors}`);
+        }
+        setTitle(resp.data);
+      });
+    } else {
+      setTitle([...title]);
+    }
   }
 
   return (
