@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import List from "./components/List";
+import List from "../components/List/GetList";
 
 function Home() {
   const [displayEmail, displayemailUpdate] = useState("");

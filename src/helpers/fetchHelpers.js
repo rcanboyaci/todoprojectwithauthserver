@@ -1,13 +1,11 @@
-// import config from "../config";
-
-const headers = {
-  "Content-Type": "application/json",
-  Authorization: `Bearer ${sessionStorage.getItem("jwttoken")}`,
-};
-
 export const fetchWithHeaders = (url, method, body) => {
+  let token = sessionStorage.getItem("jwttoken");
+  const headers = {
+    "Content-Type": "application/json",
+    Authorization: "bearer " + token,
+  };
   try {
-    const response = fetch(url, {     
+    const response = fetch(url, {
       method,
       headers,
       body: body && JSON.stringify(body),
@@ -19,4 +17,3 @@ export const fetchWithHeaders = (url, method, body) => {
     console.error(err.message);
   }
 };
-// config.baseUrl 

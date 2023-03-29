@@ -2,10 +2,13 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "react-bootstrap/Button";
 import Modal from "react-bootstrap/Modal";
-import { toast } from "react-toastify";
-import ListDetail from "./ListDetail";
-import { fetchWithHeaders } from "../helpers/fetchHelpers";
-import config from "../config";
+import ListDetail from "../ListDetail/GetListDetail";
+import { fetchWithHeaders } from "../../helpers/fetchHelpers";
+import config from "../../configs/config";
+import AddList from "./AddList";
+import UpdateList from "./UpdateList";
+import Swal from "sweetalert2";
+import DetailList from "../ListDetail/DetailList";
 
 function List() {
   const usenavigate = useNavigate();
@@ -23,49 +26,28 @@ function List() {
   const [showListDetails, setShowListDetails] = useState({}, false);
 
   useEffect(() => {
-    let email = sessionStorage.getItem("email"); //Liste yoksa çekmemem lazım.
+    let email = sessionStorage.getItem("email");
     if (email === "" || email === null) {
       usenavigate("/login");
     } else {
-      fetchWithHeaders(`${config.todoListUrl}/GetAllToDoList`, "GET").then(
+      fetchWithHeaders(`${config.apiUrl}ToDoList/GetAllToDoList`, "GET").then(
         (resp) => {
-          console.log(resp.data);
-          if (resp.lengt > 0) {
+          if (resp.data !== null) {
             setList(resp.data);
+          } else {
+            setList([...list]);
+            Swal.fire(`${resp.errors}`);
           }
         }
       );
+      setTimeout(() => {
+        fetchWithHeaders(`${config.apiUrl}Refresh/GetAllIMDBAPIMovie`, "GET");
+      }, 1000);
     }
   }, [usenavigate]);
 
-  function ListValidate() {
-    let isproceed = true;
-    let errormessage = "Please enter the value in ";
-    if (listname === null || listname === "") {
-      isproceed = false;
-      errormessage += " Listname";
-    }
-    if (!isproceed) {
-      toast.warning(errormessage);
-    }
-    return isproceed;
-  }
-
   function addList(e) {
-    e.preventDefault();
-    if (ListValidate()) {
-      fetchWithHeaders(`${config.todoListUrl}/SaveToDoList`, "POST", {
-        listname,
-      }).then((resp) => {
-        if (list === null) {
-          setList([resp.data]);
-          addListCloseModal();
-        } else {
-          setList([...list, resp.data]);
-          addListCloseModal();
-        }
-      });
-    }
+    AddList(e, listname, list, setList, addListCloseModal);
   }
 
   const editButton = (id) => {
@@ -74,55 +56,41 @@ function List() {
   };
 
   function updateList(e) {
-    e.preventDefault();
-    if (ListValidate()) {
-      let regobj = { id, listname };
-      fetchWithHeaders(
-        `${config.todoListUrl}/EditToDoList`,
-        "PUT",
-        regobj
-      ).then(() => {
-        fetchWithHeaders(`${config.todoListUrl}/GetAllToDoList`, "GET").then(
-          (resp) => {
-            setList(resp.data);
-          }
-        );
-      });
-      updateListCloseModal();
-    }
+    UpdateList(e, listname, id, setList, updateListCloseModal);
   }
 
   function deleteList(id) {
     setListId(id);
-    fetchWithHeaders(
-      `${config.todoListUrl}/RemoveToDoList/${id}`,
-      "DELETE"
-    ).then(() => {
-      setList(list.filter((item) => item.id !== id));
-      if (showListDetails === id) {
-        setShowListDetails(null);
+    Swal.fire({
+      title: "Are you sure?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, delete it!",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        fetchWithHeaders(
+          `${config.apiUrl}ToDoList/RemoveToDoList/${id}`,
+          "DELETE"
+        ).then(() => {
+          setList(list.filter((item) => item.id !== id));
+          setShowListDetails(false);
+        });
+        Swal.fire("Deleted!", "Your file has been deleted.", "success");
       }
     });
   }
 
   function detailList(id, listname) {
-    setShowListDetails((prevId) => (prevId === id ? null : id));
-    setListId(id);
-    setShowListname(listname);
-    console.log(title.indexOf());
-    if (title.indexOf !== -1) {
-      fetchWithHeaders(
-        `${config.movieToDoListUrl}/GetByListIdWithMovie/${id}`,
-        "GET"
-      ).then((resp) => {
-        if (resp.data === null) {
-          toast.info(`${resp.errors}`);
-        }
-        setTitle(resp.data);
-      });
-    } else {
-      setTitle([...title]);
-    }
+    DetailList(
+      id,
+      listname,
+      setShowListDetails,
+      setListId,
+      setShowListname,
+      setTitle
+    );
   }
 
   return (
@@ -228,13 +196,15 @@ function List() {
           </Modal>
         </div>
         <div className="col-8">
-          <ListDetail
-            goTitle={title}
-            goSetTitle={setTitle}
-            goListnameShow={showListname}
-            goShowListDetail={showListDetails}
-            goListId={id}
-          />
+          {showListDetails === id && (
+            <ListDetail
+              title={title}
+              setTitle={setTitle}
+              showListname={showListname}
+              showListDetails={showListDetails}
+              ListId={id}
+            />
+          )}
         </div>
       </div>
     </div>
